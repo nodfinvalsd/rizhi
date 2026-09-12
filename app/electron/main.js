@@ -59,6 +59,10 @@ function createMainWindow() {
     width: 1200,
     height: 800,
     show: false,
+    // 隐藏原生标题栏和菜单栏，但最小化/最大化/关闭仍由系统绘制（圆角、投影、贴边缩放都保留）
+    titleBarStyle: 'hidden',
+    titleBarOverlay: { color: '#1a1c22', symbolColor: '#e8eaed', height: 48 },
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

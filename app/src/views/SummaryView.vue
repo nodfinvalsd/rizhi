@@ -14,8 +14,8 @@
       <el-button type="primary" :loading="saving" @click="save">保存</el-button>
     </div>
 
-    <div class="summary-body" style="height: calc(100vh - 210px)">
-      <MdEditor v-model="content" class="editor" />
+    <div class="summary-body" style="height: calc(100vh - 140px)">
+      <MdEditor v-model="content" class="editor" theme="dark" />
       <div class="side">
         <div class="side-title">当日日程</div>
         <el-empty v-if="!schedules.length" description="当天没有日程" :image-size="52" />
@@ -122,7 +122,7 @@ onMounted(load)
 <style scoped>
 .day-label {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-secondary);
 }
 
 .summary-body {
@@ -144,9 +144,11 @@ onMounted(load)
 .side {
   width: 240px;
   flex-shrink: 0;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
   padding: 12px;
   overflow-y: auto;
 }
@@ -154,7 +156,7 @@ onMounted(load)
 .side-title {
   font-size: 13px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
   margin-bottom: 10px;
 }
 
@@ -170,19 +172,19 @@ onMounted(load)
   align-items: baseline;
   font-size: 13px;
   padding: 6px 8px;
-  background: #f7f8fa;
-  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
 }
 
 .s-item.done .s-title {
   text-decoration: line-through;
-  color: #b0b3b8;
+  color: var(--el-text-color-placeholder);
 }
 
 .s-time {
   font-family: Consolas, monospace;
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   flex-shrink: 0;
 }
 

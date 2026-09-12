@@ -3,6 +3,7 @@
     <div class="toolbar">
       <el-button @click="router.back()">← 返回</el-button>
       <span style="font-weight: 600">{{ isNew ? '新建知识' : '编辑知识' }}</span>
+      <el-tag v-if="dirty" size="small" type="warning">未保存</el-tag>
       <div style="flex: 1"></div>
       <el-button type="primary" :loading="saving" @click="save">保存</el-button>
     </div>
@@ -36,7 +37,12 @@
       <el-button link type="primary" @click="catDialogVisible = true">分类管理</el-button>
     </div>
 
-    <MdEditor v-model="form.content" :on-upload-img="uploadImg" style="height: calc(100vh - 220px)" />
+    <MdEditor
+      v-model="form.content"
+      :on-upload-img="uploadImg"
+      theme="dark"
+      style="height: calc(100vh - 220px)"
+    />
 
     <el-dialog v-model="catDialogVisible" title="分类管理" width="420px">
       <CategoryManager @changed="loadMeta" />
@@ -46,8 +52,8 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { MdEditor } from 'md-editor-v3'
 import 'md-editor-v3/lib/style.css'
 import CategoryManager from '../components/CategoryManager.vue'
@@ -64,6 +70,38 @@ const catDialogVisible = ref(false)
 const isNew = computed(() => !route.params.id)
 const form = reactive({ title: '', content: '', categoryId: null, tagIds: [], status: 'DRAFT' })
 const attachmentIds = ref([])
+
+// 脏检查：拿加载/保存后的快照跟当前表单比，用来拦住"改了一半就走"
+const snapshot = ref('')
+const dirty = computed(() => snapshot.value !== '' && JSON.stringify(snapshotPayload()) !== snapshot.value)
+
+function snapshotPayload() {
+  return { ...form, attachmentIds: attachmentIds.value }
+}
+
+function takeSnapshot() {
+  snapshot.value = JSON.stringify(snapshotPayload())
+}
+
+async function confirmLeave() {
+  if (!dirty.value) return true
+  try {
+    await ElMessageBox.confirm('当前修改还没保存，离开会丢失，确定吗？', '提示', {
+      type: 'warning',
+      confirmButtonText: '丢弃并离开',
+      cancelButtonText: '留下',
+    })
+    return true
+  } catch (e) {
+    return false
+  }
+}
+
+// 去别的页面
+onBeforeRouteLeave(() => confirmLeave())
+
+// 只换 :id（同一个路由复用组件）时，先确认再重载
+onBeforeRouteUpdate(() => confirmLeave())
 
 function toOptions(nodes) {
   return nodes.map((n) => ({
@@ -123,6 +161,7 @@ async function save() {
     } else {
       await api.put('/knowledge/' + route.params.id, payload)
     }
+    takeSnapshot() // 保存后重新记快照，否则离开时会把"已保存"误判成未保存
     ElMessage.success('已保存')
     router.push('/')
   } catch (e) {
@@ -139,17 +178,40 @@ async function loadMeta() {
   categoryOptions.value = toOptions(c)
 }
 
-onMounted(async () => {
-  await loadMeta()
-
+async function loadArticle() {
   attachmentIds.value = []
-  if (!isNew.value) {
+
+  if (isNew.value) {
+    Object.assign(form, { title: '', content: '', categoryId: null, tagIds: [], status: 'DRAFT' })
+    takeSnapshot()
+    return
+  }
+
+  try {
     const d = await api.get('/knowledge/' + route.params.id)
     form.title = d.title
     form.content = d.content || ''
     form.categoryId = d.categoryId > 0 ? d.categoryId : null
     form.tagIds = (d.tags || []).map((x) => x.id)
     form.status = d.status
+    takeSnapshot()
+  } catch (e) {
+    // 文章不存在时不要停在空编辑器上，否则点保存会往一个不存在的 id 上写
+    ElMessage.error(e.message || '内容加载失败')
+    snapshot.value = '' // 已经跳走了，别再弹一次"未保存"
+    router.replace('/')
   }
+}
+
+onMounted(async () => {
+  try {
+    await loadMeta()
+  } catch (e) {
+    ElMessage.error(e.message)
+  }
+  await loadArticle()
 })
+
+// 只换 :id 时组件实例被复用，onMounted 不再触发，得自己重载
+watch(() => route.params.id, () => loadArticle())
 </script>

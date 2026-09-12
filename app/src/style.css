@@ -8,9 +8,83 @@ body,
 
 body {
   font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
-  background: #f5f6f8;
+  color: var(--el-text-color-primary);
+  /* 斜向渐变而非纯黑：纯黑看不出玻璃的层次 */
+  background: #15171c;
+  background-image: linear-gradient(160deg, #15171c 0%, #1b1e26 55%, #171a21 100%);
+  background-attachment: fixed;
+  overflow: hidden;
 }
 
+/* 两团很淡的光晕，给平面渐变加一点纵深 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(820px 560px at 8% -12%, rgba(91, 140, 255, 0.10), transparent 62%),
+    radial-gradient(680px 480px at 102% 104%, rgba(126, 96, 255, 0.07), transparent 60%);
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 主题变量 ───────────────────────────────────────────── */
+html.dark {
+  --el-color-primary: #5b8cff;
+  --el-color-primary-light-3: #7ba3ff;
+  --el-color-primary-light-5: #9bbaff;
+  --el-color-primary-light-7: #1f2733;
+  --el-color-primary-light-8: #1c2430;
+  --el-color-primary-light-9: #19202b;
+  --el-color-primary-dark-2: #4a7ae8;
+
+  --el-bg-color: transparent;
+  --el-bg-color-page: transparent;
+  --el-bg-color-overlay: #1c2029;
+
+  --el-text-color-primary: #e8eaed;
+  --el-text-color-regular: #c3c7cd;
+  --el-text-color-secondary: #9aa0a6;
+  --el-text-color-placeholder: #6b7280;
+  --el-text-color-disabled: #4b5563;
+
+  --el-border-color: rgba(255, 255, 255, 0.1);
+  --el-border-color-light: rgba(255, 255, 255, 0.08);
+  --el-border-color-lighter: rgba(255, 255, 255, 0.06);
+  --el-border-color-extra-light: rgba(255, 255, 255, 0.04);
+
+  --el-fill-color: rgba(255, 255, 255, 0.06);
+  --el-fill-color-light: rgba(255, 255, 255, 0.05);
+  --el-fill-color-lighter: rgba(255, 255, 255, 0.035);
+  --el-fill-color-extra-light: rgba(255, 255, 255, 0.025);
+  --el-fill-color-dark: rgba(255, 255, 255, 0.08);
+  --el-fill-color-darker: rgba(255, 255, 255, 0.1);
+  --el-fill-color-blank: rgba(255, 255, 255, 0.045);
+
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --el-box-shadow-light: 0 4px 16px rgba(0, 0, 0, 0.28);
+  --el-mask-color: rgba(10, 12, 16, 0.6);
+}
+
+/* ── 玻璃层 ─────────────────────────────────────────────── */
+/* 那 1px 亮边是「玻璃」和「半透明灰块」的分界线，别省 */
+.glass {
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* ── 通用布局 ───────────────────────────────────────────── */
 .page {
   padding: 16px;
   max-width: 1280px;
@@ -30,5 +104,60 @@ body {
 }
 
 .draft-title {
-  color: #909399;
+  color: var(--el-text-color-secondary);
+}
+
+/* md-editor 的深色主题默认是纯黑，放在 #15171c 的底子上像挖了个洞，改成同色系的玻璃 */
+html.dark .md-editor-dark {
+  --md-bk-color: rgba(255, 255, 255, 0.045);
+  --md-bk-color-outstand: rgba(255, 255, 255, 0.03);
+  --md-bk-hover-color: rgba(255, 255, 255, 0.08);
+  --md-border-color: rgba(255, 255, 255, 0.09);
+  --md-border-hover-color: rgba(255, 255, 255, 0.16);
+  --md-color: #e8eaed;
+  --md-hover-color: #ffffff;
+}
+
+html.dark .md-editor {
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+/* 知识详情页的正文预览：MdPreview 浅色主题是白底、深色主题是纯黑，都跟底色不搭，改成玻璃 */
+html.dark .md-editor-preview-wrapper {
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 20px 24px;
+}
+
+html.dark .md-editor-preview {
+  --md-theme-bg-color: transparent;
+  --md-theme-bg-color-inset: rgba(255, 255, 255, 0.07);
+  --md-theme-border-color: rgba(255, 255, 255, 0.09);
+  --md-theme-border-color-inset: rgba(255, 255, 255, 0.12);
+  background: transparent;
+}
+
+/* 弹出层统一走玻璃：Element 的 popper/dialog 是 teleport 到 body 的，必须用全局选择器 */
+.el-popper.is-light,
+.el-select__popper,
+.el-picker__popper {
+  background: rgba(30, 34, 43, 0.92) !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.el-dialog {
+  background: rgba(28, 32, 41, 0.9) !important;
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
 }

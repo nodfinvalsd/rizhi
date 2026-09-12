@@ -5,7 +5,7 @@
         v-model="query.keyword"
         placeholder="搜索标题 / 正文"
         clearable
-        style="width: 240px"
+        style="width: 220px"
         @keyup.enter="load(1)"
         @clear="load(1)"
       />
@@ -15,17 +15,17 @@
         check-strictly
         clearable
         placeholder="分类"
-        style="width: 180px"
+        style="width: 150px"
         @change="load(1)"
       />
-      <el-select v-model="query.tagId" clearable placeholder="标签" style="width: 140px" @change="load(1)">
+      <el-select v-model="query.tagId" clearable placeholder="标签" style="width: 130px" @change="load(1)">
         <el-option v-for="t in tags" :key="t.id" :label="t.name" :value="t.id" />
       </el-select>
-      <el-select v-model="query.status" clearable placeholder="状态" style="width: 100px" @change="load(1)">
+      <el-select v-model="query.status" clearable placeholder="状态" style="width: 96px" @change="load(1)">
         <el-option label="草稿" value="DRAFT" />
         <el-option label="发布" value="PUBLISHED" />
       </el-select>
-      <el-select v-model="query.sort" style="width: 120px" @change="load(1)">
+      <el-select v-model="query.sort" style="width: 118px" @change="load(1)">
         <el-option label="最近更新" value="update_desc" />
         <el-option label="最早更新" value="update_asc" />
         <el-option label="最近创建" value="create_desc" />
@@ -35,45 +35,44 @@
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button value="fav">收藏</el-radio-button>
       </el-radio-group>
-      <div style="flex: 1"></div>
+    </div>
+
+    <div class="toolbar actions">
       <el-button @click="importVisible = true">导入 .md</el-button>
       <el-button @click="catDialogVisible = true">分类管理</el-button>
       <el-button @click="exportAll">全库导出</el-button>
       <el-button type="primary" @click="router.push('/edit')">新建</el-button>
     </div>
 
-    <el-table :data="items" style="cursor: pointer" @row-click="open">
-      <el-table-column label="标题" min-width="300">
-        <template #default="{ row }">
-          <span :class="{ 'draft-title': row.status === 'DRAFT' }">
-            {{ row.status === 'DRAFT' ? '[草稿] ' : '' }}{{ row.title }}
-          </span>
-        </template>
-      </el-table-column>
-      <el-table-column label="分类" width="140">
-        <template #default="{ row }">{{ row.categoryName || '-' }}</template>
-      </el-table-column>
-      <el-table-column label="标签" width="220">
-        <template #default="{ row }">
-          <el-tag v-for="t in row.tags" :key="t.id" size="small" style="margin-right: 4px">{{ t.name }}</el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column label="更新时间" width="160">
-        <template #default="{ row }">{{ fmt(row.updateTime) }}</template>
-      </el-table-column>
-      <el-table-column label="操作" width="120">
-        <template #default="{ row }">
+    <el-empty v-if="!items.length" description="还没有内容" />
+
+    <div v-else class="card-list">
+      <div v-for="row in items" :key="row.id" class="row-card" @click="open(row)">
+        <div class="row-main">
+          <div class="row-title">
+            <span v-if="row.status === 'DRAFT'" class="draft-badge">草稿</span>
+            {{ row.title }}
+          </div>
+          <div class="row-meta">
+            <span v-if="row.categoryName" class="row-cat">{{ row.categoryName }}</span>
+            <el-tag v-for="t in row.tags" :key="t.id" size="small" effect="plain">{{ t.name }}</el-tag>
+          </div>
+        </div>
+
+        <span class="row-time">{{ fmt(row.updateTime) }}</span>
+
+        <div class="row-actions">
           <el-button
             link
             :type="row.favorite ? 'warning' : 'default'"
             @click.stop="toggleFavorite(row)"
           >
-            {{ row.favorite ? '★ 已收藏' : '☆ 收藏' }}
+            {{ row.favorite ? '★' : '☆' }}
           </el-button>
           <el-button link type="danger" @click.stop="remove(row)">删除</el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+        </div>
+      </div>
+    </div>
 
     <el-pagination
       v-model:current-page="query.page"
@@ -229,3 +228,95 @@ onMounted(() => {
   load()
 })
 </script>
+
+<style scoped>
+/* 操作按钮单独一行靠右，跟筛选分开，不然挤成一片看不出分组 */
+.actions {
+  justify-content: flex-end;
+  margin-top: -4px;
+}
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.row-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 18px;
+  background: rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.row-card:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.row-title {
+  font-size: 14px;
+  color: var(--el-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.draft-badge {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 16px;
+  padding: 0 6px;
+  margin-right: 6px;
+  border-radius: 5px;
+  color: var(--el-text-color-secondary);
+  background: rgba(255, 255, 255, 0.07);
+  vertical-align: 1px;
+}
+
+.row-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  height: 20px;
+}
+
+.row-cat {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.row-time {
+  flex-shrink: 0;
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
+.row-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0.45;
+  transition: opacity 0.15s;
+}
+
+.row-card:hover .row-actions {
+  opacity: 1;
+}
+</style>

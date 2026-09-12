@@ -186,19 +186,21 @@ onMounted(load)
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: #fff;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
 }
 
 .schedule-item.done .title {
   text-decoration: line-through;
-  color: #b0b3b8;
+  color: var(--el-text-color-placeholder);
 }
 
 .time {
   font-family: Consolas, monospace;
-  color: #606266;
+  color: var(--el-text-color-secondary);
   min-width: 140px;
 }
 
