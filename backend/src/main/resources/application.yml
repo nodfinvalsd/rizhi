@@ -1,0 +1,31 @@
+server:
+  port: 8900
+
+spring:
+  application:
+    name: kb-backend
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/kb?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    # 密码不进入版本库：桌面应用从 electron/backend-env.json 读取注入
+    # 手动启动后端时用环境变量：KB_DB_PASSWORD=你的密码
+    password: ${KB_DB_PASSWORD:}
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 50MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    banner: false
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+kb:
+  upload-dir: ./upload

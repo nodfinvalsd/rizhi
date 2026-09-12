@@ -1,0 +1,16 @@
+# 依赖与构建产物
+node_modules/
+dist/
+target/
+
+# 本地数据与密钥
+upload/
+backup/
+app/electron/backend-env.json
+
+# 其他
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
