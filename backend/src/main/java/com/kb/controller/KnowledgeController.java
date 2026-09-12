@@ -60,8 +60,9 @@ public class KnowledgeController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long tagId,
-            @RequestParam(required = false) String status) {
-        return Result.ok(knowledgeService.page(page, size, keyword, categoryId, tagId, status));
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sort) {
+        return Result.ok(knowledgeService.page(page, size, keyword, categoryId, tagId, status, sort));
     }
 
     @PostMapping("/{id}/favorite")

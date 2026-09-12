@@ -52,6 +52,8 @@ npx electron .
 
 开发模式（前端热更新）：`cd app && npm run dev`
 
+打包便携 exe（双击即用，产出 `app/release/Rizhi-1.0.0.exe`）：先构建后端，再 `cd app && npm run package`。使用时把 `backend-env.json` 放在 exe 同目录，`upload/`、`backup/` 数据目录会自动生成在 exe 旁。
+
 ## 其他说明
 
 - 附件存 `app/upload/`，数据库备份存 `app/backup/`

@@ -63,6 +63,7 @@ const catDialogVisible = ref(false)
 
 const isNew = computed(() => !route.params.id)
 const form = reactive({ title: '', content: '', categoryId: null, tagIds: [], status: 'DRAFT' })
+const attachmentIds = ref([])
 
 function toOptions(nodes) {
   return nodes.map((n) => ({
@@ -100,6 +101,8 @@ async function uploadImg(files, callback) {
     try {
       const a = await api.post('/attachment', fd)
       urls.push(BASE_URL + '/upload/' + a.filePath)
+      // 新建时知识还没 id，记录附件 id，保存后由后端绑定到知识
+      if (!route.params.id) attachmentIds.value.push(a.id)
     } catch (e) {
       ElMessage.error('图片上传失败: ' + e.message)
     }
@@ -114,10 +117,11 @@ async function save() {
   }
   saving.value = true
   try {
+    const payload = { ...form, attachmentIds: attachmentIds.value }
     if (isNew.value) {
-      await api.post('/knowledge', form)
+      await api.post('/knowledge', payload)
     } else {
-      await api.put('/knowledge/' + route.params.id, form)
+      await api.put('/knowledge/' + route.params.id, payload)
     }
     ElMessage.success('已保存')
     router.push('/')
@@ -138,6 +142,7 @@ async function loadMeta() {
 onMounted(async () => {
   await loadMeta()
 
+  attachmentIds.value = []
   if (!isNew.value) {
     const d = await api.get('/knowledge/' + route.params.id)
     form.title = d.title

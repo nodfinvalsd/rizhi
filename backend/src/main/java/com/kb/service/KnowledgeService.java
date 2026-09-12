@@ -1,17 +1,20 @@
 package com.kb.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.kb.common.BizException;
 import com.kb.dto.KnowledgeDetail;
 import com.kb.dto.KnowledgeItem;
 import com.kb.dto.KnowledgeRequest;
+import com.kb.entity.Attachment;
 import com.kb.entity.Knowledge;
 import com.kb.entity.KnowledgeCategory;
 import com.kb.entity.KnowledgeFavorite;
 import com.kb.entity.KnowledgeTag;
 import com.kb.entity.Tag;
+import com.kb.mapper.AttachmentMapper;
 import com.kb.mapper.KnowledgeCategoryMapper;
 import com.kb.mapper.KnowledgeFavoriteMapper;
 import com.kb.mapper.KnowledgeMapper;
@@ -39,12 +42,15 @@ public class KnowledgeService {
     private final TagMapper tagMapper;
     private final KnowledgeCategoryMapper categoryMapper;
     private final KnowledgeFavoriteMapper favoriteMapper;
+    private final AttachmentMapper attachmentMapper;
+    private final AttachmentService attachmentService;
 
     public Knowledge create(KnowledgeRequest req) {
         Knowledge k = new Knowledge();
         apply(k, req);
         knowledgeMapper.insert(k);
         saveTags(k.getId(), req.getTagIds());
+        bindAttachments(k.getId(), req.getAttachmentIds());
         return k;
     }
 
@@ -67,11 +73,15 @@ public class KnowledgeService {
 
     public void delete(Long id) {
         getById(id);
+        attachmentService.deleteByKnowledgeId(id);
+        favoriteMapper.delete(new LambdaQueryWrapper<KnowledgeFavorite>()
+                .eq(KnowledgeFavorite::getKnowledgeId, id));
         knowledgeMapper.deleteById(id);
         knowledgeTagMapper.delete(new LambdaQueryWrapper<KnowledgeTag>().eq(KnowledgeTag::getKnowledgeId, id));
     }
 
-    public IPage<KnowledgeItem> page(long page, long size, String keyword, Long categoryId, Long tagId, String status) {
+    public IPage<KnowledgeItem> page(long page, long size, String keyword, Long categoryId, Long tagId,
+                                    String status, String sort) {
         LambdaQueryWrapper<Knowledge> w = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(keyword)) {
             w.and(x -> x.like(Knowledge::getTitle, keyword).or().like(Knowledge::getContent, keyword));
@@ -87,7 +97,12 @@ public class KnowledgeService {
             }
             w.in(Knowledge::getId, ids);
         }
-        w.orderByDesc(Knowledge::getUpdateTime);
+        switch (sort == null ? "update_desc" : sort) {
+            case "create_desc" -> w.orderByDesc(Knowledge::getCreateTime);
+            case "create_asc" -> w.orderByAsc(Knowledge::getCreateTime);
+            case "update_asc" -> w.orderByAsc(Knowledge::getUpdateTime);
+            default -> w.orderByDesc(Knowledge::getUpdateTime);
+        }
 
         Page<Knowledge> p = knowledgeMapper.selectPage(new Page<>(page, size), w);
 
@@ -151,6 +166,16 @@ public class KnowledgeService {
             kt.setTagId(tagId);
             knowledgeTagMapper.insert(kt);
         }
+    }
+
+    /** 新建知识前已上传的附件，保存时绑定到该知识 */
+    private void bindAttachments(Long knowledgeId, List<Long> attachmentIds) {
+        if (attachmentIds == null || attachmentIds.isEmpty()) {
+            return;
+        }
+        attachmentMapper.update(null, new LambdaUpdateWrapper<Attachment>()
+                .set(Attachment::getKnowledgeId, knowledgeId)
+                .in(Attachment::getId, attachmentIds));
     }
 
     private List<Tag> tagsOf(Long knowledgeId) {

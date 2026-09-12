@@ -21,11 +21,22 @@
       <el-select v-model="query.tagId" clearable placeholder="标签" style="width: 140px" @change="load(1)">
         <el-option v-for="t in tags" :key="t.id" :label="t.name" :value="t.id" />
       </el-select>
+      <el-select v-model="query.status" clearable placeholder="状态" style="width: 100px" @change="load(1)">
+        <el-option label="草稿" value="DRAFT" />
+        <el-option label="发布" value="PUBLISHED" />
+      </el-select>
+      <el-select v-model="query.sort" style="width: 120px" @change="load(1)">
+        <el-option label="最近更新" value="update_desc" />
+        <el-option label="最早更新" value="update_asc" />
+        <el-option label="最近创建" value="create_desc" />
+        <el-option label="最早创建" value="create_asc" />
+      </el-select>
       <el-radio-group v-model="tab" @change="load(1)">
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button value="fav">收藏</el-radio-button>
       </el-radio-group>
       <div style="flex: 1"></div>
+      <el-button @click="importVisible = true">导入 .md</el-button>
       <el-button @click="catDialogVisible = true">分类管理</el-button>
       <el-button @click="exportAll">全库导出</el-button>
       <el-button type="primary" @click="router.push('/edit')">新建</el-button>
@@ -76,6 +87,24 @@
     <el-dialog v-model="catDialogVisible" title="分类管理" width="420px">
       <CategoryManager @changed="loadMeta" />
     </el-dialog>
+
+    <el-dialog v-model="importVisible" title="导入 Markdown 文件" width="480px">
+      <el-tree-select
+        v-model="importCategoryId"
+        :data="categoryOptions"
+        check-strictly
+        clearable
+        placeholder="导入到分类（可选）"
+        style="width: 100%; margin-bottom: 12px"
+      />
+      <el-upload drag multiple :auto-upload="false" accept=".md" v-model:file-list="fileList">
+        <div style="padding: 20px 0">把 .md 文件拖到这里，或点击选择</div>
+      </el-upload>
+      <template #footer>
+        <el-button @click="importVisible = false">取消</el-button>
+        <el-button type="primary" :loading="importing" @click="doImport">导入</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -94,8 +123,12 @@ const categoryTree = ref([])
 const categoryOptions = ref([])
 const tab = ref('all')
 const catDialogVisible = ref(false)
+const importVisible = ref(false)
+const importing = ref(false)
+const importCategoryId = ref(null)
+const fileList = ref([])
 
-const query = reactive({ keyword: '', categoryId: null, tagId: null, page: 1, size: 20 })
+const query = reactive({ keyword: '', categoryId: null, tagId: null, status: '', sort: 'update_desc', page: 1, size: 20 })
 
 function fmt(t) {
   return t ? t.replace('T', ' ').slice(0, 16) : ''
@@ -166,6 +199,29 @@ async function remove(row) {
 
 function exportAll() {
   window.open(BASE_URL + '/api/export')
+}
+
+async function doImport() {
+  if (!fileList.value.length) {
+    ElMessage.warning('请先选择 .md 文件')
+    return
+  }
+  importing.value = true
+  try {
+    const fd = new FormData()
+    fileList.value.forEach((f) => fd.append('files', f.raw))
+    if (importCategoryId.value) fd.append('categoryId', importCategoryId.value)
+    const n = await api.post('/import', fd)
+    ElMessage.success('导入成功 ' + n + ' 篇')
+    importVisible.value = false
+    fileList.value = []
+    importCategoryId.value = null
+    load()
+  } catch (e) {
+    ElMessage.error(e.message)
+  } finally {
+    importing.value = false
+  }
 }
 
 onMounted(() => {

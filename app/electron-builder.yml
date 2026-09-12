@@ -1,0 +1,21 @@
+appId: com.rizhi.app
+productName: 日知
+directories:
+  output: release
+files:
+  - dist/**
+  - electron/main.js
+  - electron/preload.js
+  - electron/icon.png
+  - package.json
+extraResources:
+  - from: ../backend/target/kb-backend-1.0.0.jar
+    to: kb-backend-1.0.0.jar
+win:
+  icon: electron/icon.ico
+  # winCodeSign 工具解压需要系统支持创建符号链接（开发者模式），临时禁用签名/rcedit
+  signAndEditExecutable: false
+  target:
+    - portable
+portable:
+  artifactName: Rizhi-${version}.exe

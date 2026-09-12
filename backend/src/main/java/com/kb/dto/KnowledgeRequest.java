@@ -18,4 +18,7 @@ public class KnowledgeRequest {
     private String status;
 
     private List<Long> tagIds;
+
+    /** 新建时先上传的附件 id，保存后绑定到该知识 */
+    private List<Long> attachmentIds;
 }

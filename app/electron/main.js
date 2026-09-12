@@ -85,15 +85,30 @@ function toggleWidget() {
   }
 }
 
+function appDir() {
+  // portable 模式下 execPath 指向临时解压副本，真实 exe 目录在环境变量里
+  if (app.isPackaged) {
+    if (process.env.PORTABLE_EXECUTABLE_DIR) return process.env.PORTABLE_EXECUTABLE_DIR
+    return path.dirname(process.env.PORTABLE_EXECUTABLE_FILE || process.execPath)
+  }
+  return path.resolve(__dirname, '../..')
+}
+
 function startBackend() {
-  const jar = path.resolve(__dirname, '../../backend/target/kb-backend-1.0.0.jar')
+  // 打包后 jar 在 resources 里；开发时在 backend/target
+  const jar = app.isPackaged
+    ? path.join(process.resourcesPath, 'kb-backend-1.0.0.jar')
+    : path.resolve(__dirname, '../../backend/target/kb-backend-1.0.0.jar')
   if (!fs.existsSync(jar)) {
     console.log('[kb] backend jar not found:', jar)
     return
   }
   // 本地密钥配置（不入版本库），例如 {"KB_DB_PASSWORD": "root"}
+  // 打包后放在 exe 同目录；开发时在 electron 目录
   const env = { ...process.env }
-  const envFile = path.join(__dirname, 'backend-env.json')
+  const envFile = app.isPackaged
+    ? path.join(appDir(), 'backend-env.json')
+    : path.join(__dirname, 'backend-env.json')
   if (fs.existsSync(envFile)) {
     try {
       Object.assign(env, JSON.parse(fs.readFileSync(envFile, 'utf8')))
@@ -101,7 +116,8 @@ function startBackend() {
       console.log('[kb] failed to parse backend-env.json:', e.message)
     }
   }
-  backendProcess = spawn('java', ['-jar', jar], { stdio: 'ignore', env })
+  // 工作目录决定 upload/ 与 backup/ 的位置：打包后跟随 exe
+  backendProcess = spawn('java', ['-jar', jar], { stdio: 'ignore', env, cwd: appDir() })
   backendProcess.on('exit', (code) => {
     backendProcess = null
     if (!quitting) console.log('[kb] backend exited with code', code)
