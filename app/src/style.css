@@ -15,6 +15,10 @@ body {
   padding: 16px;
   max-width: 1280px;
   margin: 0 auto;
+  /* 作为 .main-layout 的 flex 子项，必须显式限宽，否则内部宽内容（如编辑器工具栏）
+     会把页面顶宽并撑出横向滚动条 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .toolbar {

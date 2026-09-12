@@ -61,6 +61,18 @@ public class ScheduleService {
         return listBetween(start, start.plusDays(7));
     }
 
+    /** 指定某天 */
+    public List<Schedule> day(LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        return listBetween(start, start.plusDays(1));
+    }
+
+    /** 全部日程（最新的在前） */
+    public List<Schedule> all() {
+        return scheduleMapper.selectList(new LambdaQueryWrapper<Schedule>()
+                .orderByDesc(Schedule::getStartTime));
+    }
+
     private List<Schedule> listBetween(LocalDateTime start, LocalDateTime end) {
         return scheduleMapper.selectList(new LambdaQueryWrapper<Schedule>()
                 .ge(Schedule::getStartTime, start)

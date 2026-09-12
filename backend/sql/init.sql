@@ -81,3 +81,15 @@ CREATE TABLE IF NOT EXISTS t_schedule (
     deleted     TINYINT      NOT NULL DEFAULT 0,
     PRIMARY KEY (id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- 每日总结表（一天一条）
+CREATE TABLE IF NOT EXISTS t_daily_summary (
+    id           BIGINT   NOT NULL AUTO_INCREMENT,
+    summary_date DATE     NOT NULL,
+    content      LONGTEXT,
+    create_time  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted      TINYINT  NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_date (summary_date)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

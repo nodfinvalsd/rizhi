@@ -5,6 +5,7 @@
         <el-radio-button value="today">今日</el-radio-button>
         <el-radio-button value="tomorrow">明日</el-radio-button>
         <el-radio-button value="week">本周</el-radio-button>
+        <el-radio-button value="all">全部</el-radio-button>
       </el-radio-group>
       <div style="flex: 1"></div>
       <el-button type="primary" @click="openCreate">新建日程</el-button>
@@ -32,10 +33,22 @@
           <el-input v-model="form.title" placeholder="要做什么" />
         </el-form-item>
         <el-form-item label="开始">
-          <el-date-picker v-model="form.startTime" type="datetime" placeholder="开始时间" style="width: 100%" />
+          <el-date-picker
+            v-model="form.startTime"
+            type="datetime"
+            value-format="YYYY-MM-DD[T]HH:mm:ss"
+            placeholder="开始时间"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="结束">
-          <el-date-picker v-model="form.endTime" type="datetime" placeholder="结束时间（可选）" style="width: 100%" />
+          <el-date-picker
+            v-model="form.endTime"
+            type="datetime"
+            value-format="YYYY-MM-DD[T]HH:mm:ss"
+            placeholder="结束时间（可选）"
+            style="width: 100%"
+          />
         </el-form-item>
         <el-form-item label="优先级">
           <el-select v-model="form.priority" style="width: 100%">
@@ -118,10 +131,16 @@ async function save() {
   }
   saving.value = true
   try {
+    // 只发本地时间字符串（YYYY-MM-DDTHH:mm:ss）；Date 对象会被 JSON 序列化成 UTC，导致时区偏移
+    const payload = {
+      ...form,
+      startTime: form.startTime || null,
+      endTime: form.endTime || null,
+    }
     if (editing.value) {
-      await api.put('/schedule/' + editing.value.id, form)
+      await api.put('/schedule/' + editing.value.id, payload)
     } else {
-      await api.post('/schedule', form)
+      await api.post('/schedule', payload)
     }
     dialogVisible.value = false
     ElMessage.success('已保存')

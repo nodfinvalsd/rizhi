@@ -74,6 +74,15 @@ function createMainWindow() {
   })
 }
 
+/** 把主窗口拉到前台：restore 处理最小化，moveTop 绕过 Windows 前台锁 */
+function focusMainWindow() {
+  if (!mainWindow) return
+  if (mainWindow.isMinimized()) mainWindow.restore()
+  if (!mainWindow.isVisible()) mainWindow.show()
+  mainWindow.focus()
+  mainWindow.moveTop()
+}
+
 function toggleWidget() {
   if (!widgetWindow) return
   if (widgetWindow.isVisible()) {
@@ -92,6 +101,20 @@ function appDir() {
     return path.dirname(process.env.PORTABLE_EXECUTABLE_FILE || process.execPath)
   }
   return path.resolve(__dirname, '../..')
+}
+
+function dataDir() {
+  // upload/ 与 backup/ 的落点，也就是后端的 cwd
+  // 便携版：跟 exe 同目录；安装版：放用户数据目录，避免重装/升级时覆盖安装目录导致附件与备份丢失
+  const dir = app.isPackaged
+    ? process.env.PORTABLE_EXECUTABLE_DIR || path.join(app.getPath('userData'), 'data')
+    : path.resolve(__dirname, '../..')
+  try {
+    fs.mkdirSync(dir, { recursive: true })
+  } catch (e) {
+    console.log('[kb] failed to create data dir:', e.message)
+  }
+  return dir
 }
 
 function startBackend() {
@@ -116,8 +139,8 @@ function startBackend() {
       console.log('[kb] failed to parse backend-env.json:', e.message)
     }
   }
-  // 工作目录决定 upload/ 与 backup/ 的位置：打包后跟随 exe
-  backendProcess = spawn('java', ['-jar', jar], { stdio: 'ignore', env, cwd: appDir() })
+  // 工作目录决定 upload/ 与 backup/ 的位置
+  backendProcess = spawn('java', ['-jar', jar], { stdio: 'ignore', env, cwd: dataDir() })
   backendProcess.on('exit', (code) => {
     backendProcess = null
     if (!quitting) console.log('[kb] backend exited with code', code)
@@ -140,7 +163,7 @@ function createTray() {
   tray.setToolTip('个人知识库')
   const menu = Menu.buildFromTemplate([
     { label: '显示悬浮窗', click: () => { widgetWindow.show(); widgetWindow.focus() } },
-    { label: '打开主窗口', click: () => { mainWindow.show(); mainWindow.focus() } },
+    { label: '打开主窗口', click: focusMainWindow },
     { type: 'separator' },
     { label: '退出', click: () => { quitting = true; app.quit() } },
   ])
@@ -152,12 +175,7 @@ const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
 } else {
-  app.on('second-instance', () => {
-    if (mainWindow) {
-      mainWindow.show()
-      mainWindow.focus()
-    }
-  })
+  app.on('second-instance', focusMainWindow)
 
   app.whenReady().then(() => {
     startBackend()
@@ -182,12 +200,7 @@ if (!gotLock) {
   })
 }
 
-ipcMain.on('open-main', () => {
-  if (mainWindow) {
-    mainWindow.show()
-    mainWindow.focus()
-  }
-})
+ipcMain.on('open-main', focusMainWindow)
 
 ipcMain.on('hide-widget', () => {
   if (widgetWindow) widgetWindow.hide()

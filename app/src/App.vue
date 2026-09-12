@@ -5,9 +5,16 @@
   <div v-else class="main-layout">
     <header class="app-header">
       <span class="logo">📚 个人知识库</span>
-      <el-menu mode="horizontal" router :default-active="route.path" class="nav">
+      <el-menu
+        mode="horizontal"
+        router
+        :default-active="route.path"
+        :ellipsis="false"
+        class="nav"
+      >
         <el-menu-item index="/">知识</el-menu-item>
         <el-menu-item index="/schedule">日程</el-menu-item>
+        <el-menu-item index="/summary">今日总结</el-menu-item>
       </el-menu>
       <div style="flex: 1"></div>
       <el-button size="small" :loading="backingUp" @click="backup">一键备份</el-button>
@@ -63,5 +70,7 @@ async function backup() {
 
 .nav {
   border-bottom: none;
+  /* 不让横向菜单被压缩，否则菜单项会被折叠进「···」里 */
+  flex-shrink: 0;
 }
 </style>

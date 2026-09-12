@@ -6,6 +6,7 @@ import com.kb.entity.Schedule;
 import com.kb.service.ScheduleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,8 +14,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -61,5 +64,16 @@ public class ScheduleController {
     @GetMapping("/week")
     public Result<List<Schedule>> week() {
         return Result.ok(scheduleService.week());
+    }
+
+    @GetMapping("/all")
+    public Result<List<Schedule>> all() {
+        return Result.ok(scheduleService.all());
+    }
+
+    @GetMapping("/day")
+    public Result<List<Schedule>> day(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return Result.ok(scheduleService.day(date));
     }
 }

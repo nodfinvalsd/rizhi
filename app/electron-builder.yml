@@ -11,11 +11,24 @@ files:
 extraResources:
   - from: ../backend/target/kb-backend-1.0.0.jar
     to: kb-backend-1.0.0.jar
+# 安装版把 backend-env.json 放到 exe 同目录（含数据库密码，不入版本库）
+extraFiles:
+  - from: electron/backend-env.json
+    to: backend-env.json
 win:
   icon: electron/icon.ico
   # winCodeSign 工具解压需要系统支持创建符号链接（开发者模式），临时禁用签名/rcedit
   signAndEditExecutable: false
   target:
+    - nsis
     - portable
+nsis:
+  # 单用户安装，装到 %LOCALAPPDATA%\Programs\日知，不需要管理员权限
+  oneClick: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: 日知
+  artifactName: Rizhi-Setup-${version}.exe
 portable:
   artifactName: Rizhi-${version}.exe

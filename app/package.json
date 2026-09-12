@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "node scripts/dev.mjs",
     "build": "vite build",
-    "package": "vite build && electron-builder --win portable"
+    "package": "vite build && electron-builder --win"
   },
   "dependencies": {
     "axios": "^1.7.0",
